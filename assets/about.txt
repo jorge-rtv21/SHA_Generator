@@ -1,0 +1,8 @@
+Generador de SHA - v1.0
+
+Herramienta nativa para calcular de forma rápida el
+Hash (SHA-256, MD5, etc.) de archivos de cualquier
+tamaño manteniendo un consumo de memoria bajo y estable.
+
+Desarrollador: Jorge Vázquez
+2026
