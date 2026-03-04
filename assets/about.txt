@@ -5,4 +5,17 @@ Hash (SHA-256, MD5, etc.) de archivos de cualquier
 tamaño manteniendo un consumo de memoria bajo y estable.
 
 Desarrollador: Jorge Vázquez
-2026
+Año: 2026
+
+------------------------------------------------------
+Licencia: Este software se distribuye de forma gratuita
+(Freeware) o bajo su propia licencia propietaria.
+
+AVISO LEGAL (COMPLIANCE):
+Esta aplicación ha sido desarrollada utilizando el
+framework Qt (https://www.qt.io/) y Qt libraries, las
+cuales estân licenciadas bajo GNU Lesser General Public
+License v3 (LGPL-3.0). El usuario final tiene el derecho
+a enlazar y reemplazar las librerías dinámicas provistas
+físicamente (.dll) en su directorio de instalación según
+lo estipulado en la licencia original LGPL.
