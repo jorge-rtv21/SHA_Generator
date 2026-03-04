@@ -1,10 +1,12 @@
 #include "ShaController.h"
 #include "ShaWorker.h"
 #include <QCryptographicHash>
-#include <QFile>
-#include <QTextStream>
-#include <QFileInfo>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QTextStream>
+#include <QThread>
+#include <QUrl>
 
 ShaController::ShaController(QObject *parent)
     : QObject(parent)

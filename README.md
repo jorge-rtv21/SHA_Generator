@@ -13,11 +13,12 @@ Esta es la forma más fácil y tradicional de usar el programa.
 **Pasos:**
 
 1. **Abre el programa:** Ve a tu carpeta `dist/` y haz doble clic sobre el archivo **`appSHAGenerator.exe`**.
-2. **Selecciona tu archivo:** Haz clic en el botón de la lupa (Examinar) para buscar en tu computadora el documento, video, o archivo que quieres analizar.
+2. **Selecciona tu archivo:** Haz clic en el botón de la lupa (Examinar) para buscar en tu computadora el documento, video, o archivo que quieres analizar. **¡También puedes simplemente arrastrar y soltar el archivo directamente sobre la ventana!**
 3. **Elige el tipo de código:** En el menú desplegable, selecciona el tipo de código de seguridad que necesitas. Casi siempre se usa **SHA-256**, por lo que ya está seleccionado por defecto. (Otras opciones incluyen MD5, SHA-512, etc.).
 4. **Espera un momento:** Verás una barra de progreso. Si el archivo es muy grande, puede tardar unos segundos. **Tu computadora no se trabará** gracias a que el programa está preparado para archivos gigantes.
 5. **Ve el resultado:** Al terminar, aparecerá un código largo en la pantalla.
 6. **Guardar el resultado:** Haz clic en el botón de **Guardar**. Se creará automáticamente un nuevo archivo de texto junto a tu archivo original (Por ejemplo, si elegiste `video.mp4`, se creará uno nuevo llamado `video.mp4.sha256`) con el código dentro.
+7. **Verificar un Hash (Opcional):** Si descargaste un archivo de internet y te dieron un código oficial para validarlo, puedes pegar ese código en la caja inferior que dice "Verificación". El programa te avisará inmediatamente con una etiqueta Verde de "✔ COINCIDE" si es auténtico, o Rojo de "✖ NO COINCIDE" si está modificado o dañado.
 
 ---
 
