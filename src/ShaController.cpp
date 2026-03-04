@@ -8,7 +8,19 @@
 
 ShaController::ShaController(QObject *parent)
     : QObject(parent)
+    , m_workerThread(nullptr) // Initialize m_workerThread
+    , m_progress(0)
+    , m_isProcessing(false)
+    , m_isHashValid(false) // Initialize m_isHashValid
 {
+    // Connect hashResultChanged to verifyHash to automatically re-evaluate validity
+    connect(this, &ShaController::hashResultChanged, this, [this]() {
+        // Re-evaluate hash validity if a target hash was previously set for verification
+        // This assumes verifyHash might be called with a stored target, or that
+        // the UI will re-trigger verification if needed.
+        // For now, just reset validity when hash result changes.
+        setIsHashValid(false);
+    });
 }
 
 ShaController::~ShaController()
@@ -16,6 +28,8 @@ ShaController::~ShaController()
     if (m_workerThread) {
         m_workerThread->quit();
         m_workerThread->wait();
+        delete m_workerThread; // Ensure thread is deleted
+        m_workerThread = nullptr;
     }
 }
 
@@ -23,6 +37,7 @@ int ShaController::progress() const { return m_progress; }
 QString ShaController::statusMessage() const { return m_statusMessage; }
 QString ShaController::hashResult() const { return m_hashResult; }
 bool ShaController::isProcessing() const { return m_isProcessing; }
+bool ShaController::isHashValid() const { return m_isHashValid; } // New getter
 
 void ShaController::setProgress(int newProgress) {
     if (m_progress == newProgress) return;
@@ -46,6 +61,12 @@ void ShaController::setIsProcessing(bool newIsProcessing) {
     if (m_isProcessing == newIsProcessing) return;
     m_isProcessing = newIsProcessing;
     emit isProcessingChanged();
+}
+
+void ShaController::setIsHashValid(bool newIsHashValid) { // New setter
+    if (m_isHashValid == newIsHashValid) return;
+    m_isHashValid = newIsHashValid;
+    emit isHashValidChanged();
 }
 
 void ShaController::calculateSha(const QString &filePath, int algoIndex)
@@ -168,4 +189,28 @@ QString ShaController::readAboutText() const
         return QString::fromUtf8(file2.readAll());
     }
     return "Error: No se pudo cargar el archivo about.txt desde los recursos.";
+}
+
+QString ShaController::cleanDropUrl(const QString &url) const
+{
+    // Las URL de arrastre vienen como "file:///C:/Ruta/Archivo.ext"
+    QUrl qUrl(url);
+    if (qUrl.isLocalFile()) {
+        return QDir::toNativeSeparators(qUrl.toLocalFile());
+    }
+    return url;
+}
+
+void ShaController::verifyHash(const QString &targetHash)
+{
+    if (m_hashResult.isEmpty() || targetHash.isEmpty()) {
+        setIsHashValid(false);
+        return;
+    }
+
+    // Comparamos sin sensibilidad a mayúsculas y eliminando espacios
+    QString cleanTarget = targetHash.trimmed().toLower();
+    QString cleanOriginal = m_hashResult.trimmed().toLower();
+    
+    setIsHashValid(cleanTarget == cleanOriginal);
 }
