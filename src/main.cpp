@@ -4,6 +4,7 @@
 #include <QCommandLineParser>
 #include <QCommandLineOption>
 #include <QCoreApplication>
+#include <QIcon>
 #include <iostream>
 #include <QFile>
 #include "ShaController.h"
@@ -15,6 +16,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     app.setApplicationName("SHAGenerator");
     app.setApplicationVersion("1.0");
+    app.setWindowIcon(QIcon(":/SHAGenerator/assets/icon.ico"));
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Generador de Hashes SHA y MD5 Hibrido (GUI / CLI)");
@@ -29,6 +31,9 @@ int main(int argc, char *argv[])
 
     QCommandLineOption algoOption(QStringList() << "a" << "algo", "Algoritmo: md5, sha1, sha224, sha256 (default), sha384, sha512", "algorithm", "sha256");
     parser.addOption(algoOption);
+
+    QCommandLineOption openOption(QStringList() << "o" << "open", "Abrir archivo pre-cargado en modo visual", "filepath");
+    parser.addOption(openOption);
 
     // Procesamos y verificamos si hay flags.
     parser.process(app);
@@ -84,6 +89,14 @@ int main(int argc, char *argv[])
     ShaController shaController;
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("shaController", &shaController);
+
+    QString initialFilePath = "";
+    if (parser.isSet(openOption)) {
+        initialFilePath = parser.value(openOption);
+    } else if (!parser.positionalArguments().isEmpty()) {
+        initialFilePath = parser.positionalArguments().first();
+    }
+    engine.rootContext()->setContextProperty("initialFilePath", initialFilePath);
 
     const QUrl url(u"qrc:/SHAGenerator/qml/Main.qml"_qs);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,

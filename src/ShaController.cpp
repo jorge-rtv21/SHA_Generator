@@ -7,6 +7,13 @@
 #include <QTextStream>
 #include <QThread>
 #include <QUrl>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QCoreApplication>
 
 ShaController::ShaController(QObject *parent)
     : QObject(parent)
@@ -15,6 +22,7 @@ ShaController::ShaController(QObject *parent)
     , m_isProcessing(false)
     , m_isHashValid(false) // Initialize m_isHashValid
 {
+    m_networkManager = new QNetworkAccessManager(this);
     // Connect hashResultChanged to verifyHash to automatically re-evaluate validity
     connect(this, &ShaController::hashResultChanged, this, [this]() {
         // Re-evaluate hash validity if a target hash was previously set for verification
@@ -215,4 +223,41 @@ void ShaController::verifyHash(const QString &targetHash)
     QString cleanOriginal = m_hashResult.trimmed().toLower();
     
     setIsHashValid(cleanTarget == cleanOriginal);
+}
+
+void ShaController::checkForUpdates()
+{
+    QUrl url("https://api.github.com/repos/jorge-rtv21/SHA_Generator/releases/latest");
+    QNetworkRequest request(url);
+    // GitHub API requests require a User-Agent header
+    request.setHeader(QNetworkRequest::UserAgentHeader, "SHAGenerator-App");
+    
+    QNetworkReply *reply = m_networkManager->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        onUpdateCheckFinished(reply);
+    });
+}
+
+void ShaController::onUpdateCheckFinished(QNetworkReply *reply)
+{
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray responseData = reply->readAll();
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
+        
+        if (!jsonDoc.isNull() && jsonDoc.isObject()) {
+            QJsonObject jsonObj = jsonDoc.object();
+            if (jsonObj.contains("tag_name")) {
+                QString latestVersion = jsonObj["tag_name"].toString();
+                // Versión referenciable. Asumimos 1.0.0
+                QString currentVersion = "v1.0.0"; 
+                
+                // Si existe un tag en Github diferente y no vacío, sugerimos actualización
+                if (!latestVersion.isEmpty() && latestVersion != currentVersion) {
+                    QString downloadUrl = jsonObj["html_url"].toString();
+                    emit updateAvailable(latestVersion, downloadUrl);
+                }
+            }
+        }
+    }
+    reply->deleteLater();
 }

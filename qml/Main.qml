@@ -11,6 +11,55 @@ ApplicationWindow {
     title: qsTr("Generador SHA")
     color: "#f0f2f5"
 
+    Component.onCompleted: {
+        shaController.checkForUpdates()
+    }
+
+    Connections {
+        target: shaController
+        function onUpdateAvailable(newVersion, downloadUrl) {
+            updateBanner.versionText = newVersion
+            updateBanner.downloadUrl = downloadUrl
+            updateBanner.visible = true
+        }
+    }
+
+    header: Rectangle {
+        id: updateBanner
+        width: parent.width
+        height: 45
+        color: "#fff3cd"
+        visible: false
+        border.color: "#ffeeba"
+        border.width: 1
+        
+        property string versionText: ""
+        property string downloadUrl: ""
+        
+        RowLayout {
+            anchors.centerIn: parent
+            spacing: 15
+            Label {
+                text: qsTr("¡Nueva versión disponible! (") + updateBanner.versionText + qsTr(")")
+                color: "#856404"
+                font.bold: true
+                font.pixelSize: 13
+            }
+            Button {
+                text: qsTr("Descargar")
+                onClicked: Qt.openUrlExternally(updateBanner.downloadUrl)
+                height: 30
+            }
+            Button {
+                text: qsTr("✕")
+                flat: true
+                width: 30
+                height: 30
+                onClicked: updateBanner.visible = false
+            }
+        }
+    }
+
     menuBar: MenuBar {
         Menu {
             title: qsTr("&Ayuda")
@@ -87,9 +136,10 @@ ApplicationWindow {
             TextField {
                 id: selectedFileField
                 Layout.fillWidth: true
-                placeholderText: qsTr("Ningún archivo seleccionado...")
+                placeholderText: qsTr("Arrastra o selecciona un archivo...")
                 readOnly: true
                 color: "#555"
+                text: typeof initialFilePath !== "undefined" ? initialFilePath : ""
             }
 
             Button {

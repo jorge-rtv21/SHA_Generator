@@ -5,6 +5,9 @@
 #include <QString>
 #include <QThread>
 
+class QNetworkAccessManager;
+class QNetworkReply;
+
 class ShaController : public QObject
 {
     Q_OBJECT
@@ -30,8 +33,10 @@ public:
     Q_INVOKABLE QString readAboutText() const;
     Q_INVOKABLE QString cleanDropUrl(const QString &url) const;
     Q_INVOKABLE void verifyHash(const QString &targetHash); // NUEVO: Evaluador de Hashes
+    Q_INVOKABLE void checkForUpdates(); // NUEVO: Auto-Actualizador
 
 signals:
+    void updateAvailable(QString newVersion, QString downloadUrl);
     void progressChanged();
     void statusMessageChanged();
     void hashResultChanged();
@@ -42,6 +47,7 @@ private slots:
     void onWorkerProgress(int percentage);
     void onWorkerFinished(const QString &hash);
     void onWorkerError(const QString &message);
+    void onUpdateCheckFinished(QNetworkReply *reply);
 
 private:
     void setProgress(int newProgress);
@@ -57,6 +63,7 @@ private:
     bool m_isHashValid = false; // NUEVO: Miembro para el estado de validación
     
     QThread* m_workerThread = nullptr;
+    QNetworkAccessManager* m_networkManager = nullptr;
 };
 
 #endif // SHACONTROLLER_H
