@@ -251,8 +251,8 @@ void ShaController::onUpdateCheckFinished(QNetworkReply *reply)
             QJsonObject jsonObj = jsonDoc.object();
             if (jsonObj.contains("tag_name")) {
                 QString latestVersion = jsonObj["tag_name"].toString();
-                // Versión interna (base release)
-                QString currentVersion = "v1.1.0"; 
+                // Obtener versión maestra del ejecutable (Ej: "v1.1.0")
+                QString currentVersion = "v" + QCoreApplication::applicationVersion(); 
                 
                 // Si existe un tag en Github diferente y no vacío, sugerimos actualización
                 if (!latestVersion.isEmpty() && latestVersion != currentVersion) {

@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     // Usamos QGuiApplication porque la aplicación podría arrancar en GUI.
     QGuiApplication app(argc, argv);
     app.setApplicationName("SHAGenerator");
-    app.setApplicationVersion("1.0");
+    app.setApplicationVersion("1.1.0");
     app.setWindowIcon(QIcon(":/SHAGenerator/assets/icon.ico"));
 
     QCommandLineParser parser;
