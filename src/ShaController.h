@@ -7,6 +7,7 @@
 
 class QNetworkAccessManager;
 class QNetworkReply;
+class QFile;
 
 class ShaController : public QObject
 {
@@ -34,9 +35,12 @@ public:
     Q_INVOKABLE QString cleanDropUrl(const QString &url) const;
     Q_INVOKABLE void verifyHash(const QString &targetHash); // NUEVO: Evaluador de Hashes
     Q_INVOKABLE void checkForUpdates(); // NUEVO: Auto-Actualizador
+    Q_INVOKABLE void downloadUpdate(const QString &url);
 
 signals:
     void updateAvailable(QString newVersion, QString downloadUrl);
+    void updateDownloadProgress(int percent);
+    void updateDownloadFinished(bool success, QString message);
     void progressChanged();
     void statusMessageChanged();
     void hashResultChanged();
@@ -48,6 +52,8 @@ private slots:
     void onWorkerFinished(const QString &hash);
     void onWorkerError(const QString &message);
     void onUpdateCheckFinished(QNetworkReply *reply);
+    void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+    void onDownloadFinished();
 
 private:
     void setProgress(int newProgress);
@@ -64,6 +70,8 @@ private:
     
     QThread* m_workerThread = nullptr;
     QNetworkAccessManager* m_networkManager = nullptr;
+    QNetworkReply* m_downloadReply = nullptr;
+    QFile* m_downloadFile = nullptr;
 };
 
 #endif // SHACONTROLLER_H

@@ -2,7 +2,7 @@
 ; Información de Aplicación
 AppId={{D1A2B3C4-E5F6-7890-12A3-B4C5D6E7F800}
 AppName=SHA Generator
-AppVersion=1.0.0
+AppVersion=1.1.0
 AppPublisher=Jorge Vázquez
 AppPublisherURL=https://github.com/jorge-rtv21/SHA_Generator
 AppSupportURL=https://github.com/jorge-rtv21/SHA_Generator
@@ -18,7 +18,7 @@ DisableProgramGroupPage=yes
 
 ; Salida del Instalador
 OutputDir=.\InnoOutput
-OutputBaseFilename=Instalar_SHAGenerator_v1.0
+OutputBaseFilename=Instalar_SHAGenerator_v1.1.0
 Compression=lzma
 SolidCompression=yes
 

@@ -13,7 +13,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QJsonArray>
 #include <QCoreApplication>
+#include <QStandardPaths>
+#include <QProcess>
 
 ShaController::ShaController(QObject *parent)
     : QObject(parent)
@@ -248,16 +251,108 @@ void ShaController::onUpdateCheckFinished(QNetworkReply *reply)
             QJsonObject jsonObj = jsonDoc.object();
             if (jsonObj.contains("tag_name")) {
                 QString latestVersion = jsonObj["tag_name"].toString();
-                // Versión referenciable. Asumimos 1.0.0
-                QString currentVersion = "v1.0.0"; 
+                // Versión interna (base release)
+                QString currentVersion = "v1.1.0"; 
                 
                 // Si existe un tag en Github diferente y no vacío, sugerimos actualización
                 if (!latestVersion.isEmpty() && latestVersion != currentVersion) {
-                    QString downloadUrl = jsonObj["html_url"].toString();
+                    QString downloadUrl = "";
+                    if (jsonObj.contains("assets") && jsonObj["assets"].isArray()) {
+                        QJsonArray assets = jsonObj["assets"].toArray();
+                        for (const QJsonValue &value : assets) {
+                            QJsonObject asset = value.toObject();
+                            QString name = asset["name"].toString();
+                            if (name.endsWith(".exe")) {
+                                downloadUrl = asset["browser_download_url"].toString();
+                                break;
+                            }
+                        }
+                    }
+                    if (downloadUrl.isEmpty()) {
+                        downloadUrl = jsonObj["html_url"].toString(); // fallback
+                    }
                     emit updateAvailable(latestVersion, downloadUrl);
                 }
             }
         }
     }
     reply->deleteLater();
+}
+
+void ShaController::downloadUpdate(const QString &url)
+{
+    if (m_downloadReply) return; // Ya existe una descarga en curso
+    
+    QUrl downloadUrl(url);
+    if (!downloadUrl.isValid()) {
+        emit updateDownloadFinished(false, "URL de descarga inválida.");
+        return;
+    }
+
+    QNetworkRequest request(downloadUrl);
+    // Permitir redireccionamientos (común en descargas de assets de GitHub)
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setHeader(QNetworkRequest::UserAgentHeader, "SHAGenerator-App");
+
+    m_downloadReply = m_networkManager->get(request);
+
+    QString tempPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/SHAGenerator_Update.exe";
+    m_downloadFile = new QFile(tempPath);
+    if (m_downloadFile->exists()) {
+        m_downloadFile->remove();
+    }
+    
+    if (!m_downloadFile->open(QIODevice::WriteOnly)) {
+        emit updateDownloadFinished(false, "No se pudo crear el archivo temporal de actualización.");
+        m_downloadReply->deleteLater();
+        m_downloadReply = nullptr;
+        delete m_downloadFile;
+        m_downloadFile = nullptr;
+        return;
+    }
+
+    connect(m_downloadReply, &QNetworkReply::readyRead, this, [this]() {
+        if (m_downloadFile) {
+            m_downloadFile->write(m_downloadReply->readAll());
+        }
+    });
+    
+    connect(m_downloadReply, &QNetworkReply::downloadProgress, this, &ShaController::onDownloadProgress);
+    connect(m_downloadReply, &QNetworkReply::finished, this, &ShaController::onDownloadFinished);
+}
+
+void ShaController::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
+{
+    if (bytesTotal > 0) {
+        int percent = static_cast<int>((bytesReceived * 100) / bytesTotal);
+        emit updateDownloadProgress(percent);
+    }
+}
+
+void ShaController::onDownloadFinished()
+{
+    if (!m_downloadReply || !m_downloadFile) return;
+
+    if (m_downloadReply->error() == QNetworkReply::NoError) {
+        m_downloadFile->close();
+        QString filePath = m_downloadFile->fileName();
+        
+        // Ejecutar silenciosamente como instalador y cerrar la aplicación actual
+        bool started = QProcess::startDetached(filePath, QStringList() << "/SILENT");
+        if (started) {
+            emit updateDownloadFinished(true, "Actualización iniciada. Reiniciando programa...");
+            QCoreApplication::quit();
+        } else {
+            emit updateDownloadFinished(false, "No se pudo ejecutar el archivo de instalación.");
+        }
+    } else {
+        emit updateDownloadFinished(false, "Error de red: " + m_downloadReply->errorString());
+        m_downloadFile->close();
+        m_downloadFile->remove();
+    }
+    
+    m_downloadReply->deleteLater();
+    m_downloadReply = nullptr;
+    delete m_downloadFile;
+    m_downloadFile = nullptr;
 }

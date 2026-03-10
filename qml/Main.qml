@@ -21,13 +21,23 @@ ApplicationWindow {
             updateBanner.versionText = newVersion
             updateBanner.downloadUrl = downloadUrl
             updateBanner.visible = true
+            updateBanner.downloading = false
+            updateBanner.progressValue = 0
+            updateBanner.statusText = ""
+        }
+        function onUpdateDownloadProgress(percent) {
+            updateBanner.progressValue = percent
+        }
+        function onUpdateDownloadFinished(success, message) {
+            updateBanner.downloading = false
+            updateBanner.statusText = message
         }
     }
 
     header: Rectangle {
         id: updateBanner
         width: parent.width
-        height: 45
+        height: 65
         color: "#fff3cd"
         visible: false
         border.color: "#ffeeba"
@@ -35,27 +45,54 @@ ApplicationWindow {
         
         property string versionText: ""
         property string downloadUrl: ""
+        property bool downloading: false
+        property int progressValue: 0
+        property string statusText: ""
         
-        RowLayout {
+        ColumnLayout {
             anchors.centerIn: parent
-            spacing: 15
-            Label {
-                text: qsTr("¡Nueva versión disponible! (") + updateBanner.versionText + qsTr(")")
-                color: "#856404"
-                font.bold: true
-                font.pixelSize: 13
+            spacing: 5
+            
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 15
+                Label {
+                    text: updateBanner.statusText !== "" ? updateBanner.statusText : (qsTr("¡Nueva versión disponible! (") + updateBanner.versionText + qsTr(")"))
+                    color: "#856404"
+                    font.bold: true
+                    font.pixelSize: 13
+                }
+                Button {
+                    text: updateBanner.downloading ? (updateBanner.progressValue + "%") : (updateBanner.statusText !== "" ? qsTr("Cerrar") : qsTr("Actualizar Automáticamente"))
+                    enabled: !updateBanner.downloading
+                    height: 30
+                    visible: true
+                    onClicked: {
+                        if (updateBanner.statusText !== "") {
+                            updateBanner.visible = false
+                        } else {
+                            updateBanner.downloading = true
+                            shaController.downloadUpdate(updateBanner.downloadUrl)
+                        }
+                    }
+                }
+                Button {
+                    text: qsTr("✕")
+                    flat: true
+                    width: 30
+                    height: 30
+                    visible: !updateBanner.downloading && updateBanner.statusText === ""
+                    onClicked: updateBanner.visible = false
+                }
             }
-            Button {
-                text: qsTr("Descargar")
-                onClicked: Qt.openUrlExternally(updateBanner.downloadUrl)
-                height: 30
-            }
-            Button {
-                text: qsTr("✕")
-                flat: true
-                width: 30
-                height: 30
-                onClicked: updateBanner.visible = false
+            
+            ProgressBar {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 350
+                from: 0
+                to: 100
+                value: updateBanner.progressValue
+                visible: updateBanner.downloading
             }
         }
     }
